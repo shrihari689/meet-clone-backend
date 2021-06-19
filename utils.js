@@ -1,4 +1,11 @@
-const getDateTimeString = (date = new Date()) => {
+const getIST = (date = new Date()) => {
+    const currentOffset = date.getTimezoneOffset();
+    const ISTOffset = 330;
+    const ISTTime = new Date(date.getTime() + (ISTOffset + currentOffset) * 60000);
+    return ISTTime;
+}
+
+const getDateTimeString = (date = getIST()) => {
     const months = [
         "Jan",
         "Feb",
