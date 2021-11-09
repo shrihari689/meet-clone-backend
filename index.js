@@ -1,37 +1,43 @@
+require("dotenv").config();
 const express = require("express");
-const http = require("http");
-const { getDateTimeString } = require("./utils")
+const { auth } = require("./firebase");
+const { createNewRoom, joinRoom } = require("./hms");
+const cors = require("cors");
 const app = express();
-const server = http.createServer(app);
-const io = require('socket.io')(server, {
-    cors: {
-        origin: [
-            'http://localhost:3000',
-            "https://meet-clone-shrihari689.web.app"
-        ],
-    }
-});
 const PORT = process.env.PORT || 4000;
 
-io.on("connection", (socket) => {
-    console.log("New Connection: " + socket.id)
-    socket.on("joinCall", (data) => {
-        const { meetId } = JSON.parse(data)
-        socket.meetId = meetId
-        socket.join(meetId);
-        console.log("Meet ID: " + meetId)
-    })
-    socket.on("newMessage", (data) => {
-        const message = JSON.parse(data);
-        const newMessage = JSON.stringify({ ...message, time: getDateTimeString().time })
-        io.to(socket.meetId).emit("newMessage", newMessage)
-    })
-    socket.on("disconnect", () => {
-        console.log("Disconnected: " + socket.id)
-    })
-})
+app.use(express.json());
+app.use(
+  cors({
+    origin: ["http://localhost:3000", "https://meet-clone-shrihari689.web.app"],
+  })
+);
 
+app.post("/newMeeting", (req, res) => {
+  const token = req.headers["x-api-token"];
+  auth
+    .verifyIdToken(token)
+    .then((user) => {
+      createNewRoom(user)
+        .then((room) => res.status(201).json(room))
+        .catch((err) => res.status(500).json({ error: err.message }));
+    })
+    .catch((err) => res.status(500).json({ error: err.message }));
+});
 
-server.listen(PORT, () => {
-    console.log("Listening on " + PORT)
-})
+app.post("/joinMeeting", (req, res) => {
+  const token = req.headers["x-api-token"];
+  const meetId = req.body.meetId;
+  auth
+    .verifyIdToken(token)
+    .then((user) => {
+      joinRoom(user, meetId)
+        .then((room) => res.status(200).json(room))
+        .catch((err) => res.status(500).json({ error: err.message }));
+    })
+    .catch((err) => res.status(500).json({ error: err.message }));
+});
+
+app.listen(PORT, () => {
+  console.log("Listening on " + PORT);
+});
