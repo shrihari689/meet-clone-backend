@@ -11,7 +11,7 @@ const createNewRoom = async (user) => {
     .post(
       "https://prod-in2.100ms.live/api/v2/rooms",
       {
-        name: "xfv-rgad-vsq",
+        name: generateNewMeetId(),
         description: JSON.stringify({ host: user.uid }),
       },
       {

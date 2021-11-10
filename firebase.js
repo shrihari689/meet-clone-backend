@@ -17,8 +17,7 @@ const serviceAccount = {
 
 const app = admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL:
-    "https://meet-clone-shrihari689-default-rtdb.asia-southeast1.firebasedatabase.app",
+  databaseURL: process.env.DATABASE_URL,
 });
 
 module.exports.auth = getAuth(app);
